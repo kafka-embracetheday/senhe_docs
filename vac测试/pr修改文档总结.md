@@ -6,7 +6,7 @@
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-34-25-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-18-34-25-image.png)**修改后**:
 
 ```go
 if *execlPath == "" {
@@ -22,7 +22,7 @@ if *execlPath == "" {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-34-35-image.png)
+**修改前**:![](assets\2024-10-15-18-34-35-image.png)
 
 **修改后**:
 
@@ -39,7 +39,7 @@ defer f.Close()
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-34-45-image.png)
+**修改前**:![](assets\2024-10-15-18-34-45-image.png)
 
 **修改后**:
 
@@ -61,7 +61,7 @@ student := util.Student{
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-35-03-image.png)
+**修改前**:![](assets\2024-10-15-18-35-03-image.png)
 
 **修改后**:
 
@@ -85,7 +85,7 @@ func InitMysql(dsn string) error {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-35-13-image.png)
+**修改前**:![](assets\2024-10-15-18-35-13-image.png)
 
 **修改后**:
 
@@ -109,7 +109,7 @@ func IsInValidPhone(phone string) bool {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-35-22-image.png)
+**修改前**:![](assets\2024-10-15-18-35-22-image.png)
 
 **修改后**:
 
@@ -125,7 +125,7 @@ loginNames := make(map[string]*Student)
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-35-35-image.png)
+**修改前**:![](assets\2024-10-15-18-35-35-image.png)
 
 **修改后**:
 
@@ -143,7 +143,7 @@ fmt.Sprintf(objectFmt,....)
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-35-55-image.png)
+**修改前**:![](assets\2024-10-15-18-35-55-image.png)
 
 修改后**:
 
@@ -159,7 +159,7 @@ fmt.Sprintf(objectFmt,....)
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-17-01-image.png)
+**修改前**:![](assets\2024-10-15-18-17-01-image.png)
 
 #### 10
 
@@ -169,7 +169,7 @@ fmt.Sprintf(objectFmt,....)
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-21-13-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-18-21-13-image.png)**修改后**:
 
 ```go
 将line封装成了一个多行的数据[][]map
@@ -183,7 +183,7 @@ fmt.Sprintf(objectFmt,....)
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-23-31-image.png)修改后**:
+**修改前**:**![](assets\2024-10-15-18-23-31-image.png)修改后**:
 
 ```go
 将协程去掉了，顺序是先写excel表，再写mysql
@@ -197,7 +197,7 @@ fmt.Sprintf(objectFmt,....)
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-25-14-image.png)修改后**:
+**修改前**:**![](assets\2024-10-15-18-25-14-image.png)修改后**:
 
 ```go
 repeatList 使用驼峰命名，ProcessStudent方法返回一个存在错误的结构体：
@@ -218,7 +218,7 @@ type AccountProcessingResult struct {
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-28-23-image.png)修改后**:
+**修改前**:**![](assets\2024-10-15-18-28-23-image.png)修改后**:
 
 ```go
 addBinding := func(name, key string, accID int) {
@@ -235,7 +235,7 @@ addBinding := func(name, key string, accID int) {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-30-28-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-18-30-28-image.png)**修改后**:
 
 ```go
 删掉改方法，在主函数执行，map的初始化
@@ -249,7 +249,7 @@ addBinding := func(name, key string, accID int) {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-18-32-31-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-18-32-31-image.png)**修改后**:
 
 ```go
 删掉改方法，在主函数执行，map的初始化
@@ -263,7 +263,7 @@ addBinding := func(name, key string, accID int) {
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-21-24-image.png)修改后**:
+**修改前**:**![](assets\2024-10-15-19-21-24-image.png)修改后**:
 
 ```go
 删掉默认为nil的字段
@@ -277,7 +277,7 @@ addBinding := func(name, key string, accID int) {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-22-45-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-19-22-45-image.png)**修改后**:
 
 ```go
 var status, reason, result string
@@ -331,7 +331,7 @@ var status, reason, result string
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-24-43-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-19-24-43-image.png)**修改后**:
 
 ```go
 // 将字符串拼接落到Account中，然后IdentityURN直接传入account.IdentityURN
@@ -348,7 +348,7 @@ func (a *Account) IdentityURN() string {
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-27-14-image.png)修改后**:
+**修改前**:**![](assets\2024-10-15-19-27-14-image.png)修改后**:
 
 ```go
 // 使用[]map[string]string来接受数据
@@ -380,7 +380,7 @@ var students []map[string]string
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-29-00-image.png)修改后**:
+**修改前**:**![](assets\2024-10-15-19-29-00-image.png)修改后**:
 
 ```go
 // CreateAccount 基础函数,插入account表
@@ -401,7 +401,7 @@ func CreateBinding(binding *UniqueBinding, tx *gorm.DB) error {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-31-52-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-19-31-52-image.png)**修改后**:
 
 ```go
 log记录使用logrus库
@@ -415,7 +415,7 @@ log记录使用logrus库
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-32-33-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-19-32-33-image.png)**修改后**:
 
 ```go
 var db *gorm.DB
@@ -439,7 +439,7 @@ func InitMysql(dsn string) error {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-15-19-34-06-image.png)**修改后**:
+**修改前**:![](assets\2024-10-15-19-34-06-image.png)**修改后**:
 
 ```go
 // CreateAccount 基础函数,插入account表
@@ -456,7 +456,7 @@ func CreateAccount(account *Account, tx *gorm.DB) error {
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-03-05-image.png)**修改后**:
+**修改前**:![](assets\2024-10-16-15-03-05-image.png)**修改后**:
 
 ```go
 uniqueId := util.GenerateRandomString()
@@ -470,7 +470,7 @@ uniqueId := util.GenerateRandomString()
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-04-42-image.png)**修改后**:
+**修改前**:![](assets\2024-10-16-15-04-42-image.png)**修改后**:
 
 ```go
 const (
@@ -499,7 +499,7 @@ const (
 
 ##### 主要修改内容
 
-**修改前**:**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-07-24-image.png)修改后**:
+**修改前**:**![](assets\2024-10-16-15-07-24-image.png)修改后**:
 
 ```go
 var students []map[string]string
@@ -530,7 +530,7 @@ var students []map[string]string
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-10-04-image.png)**修改后**:
+**修改前**:![](assets\2024-10-16-15-10-04-image.png)**修改后**:
 
 ```go
 
@@ -678,7 +678,7 @@ func ProcessStudentsData(students []map[string]string) ([]map[string]string, *Ac
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-14-35-image.png)**修改后**:
+**修改前**:![](assets\2024-10-16-15-14-35-image.png)**修改后**:
 
 ```go
 // WriteOrAppendStudentsToExcel 写入excel文件 根据appendData决定是追加到excel还是创建新的excel
@@ -756,7 +756,7 @@ func WriteOrAppendStudentsToExcel(studentMaps *AccountProcessingResult, filePath
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-20-26-image.png)**修改后**:
+**修改前**:![](assets\2024-10-16-15-20-26-image.png)**修改后**:
 
 ```go
 
@@ -771,7 +771,7 @@ func WriteOrAppendStudentsToExcel(studentMaps *AccountProcessingResult, filePath
 
 ##### 主要修改内容
 
-**修改前**:*![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-23-55-image.png)
+**修改前**:*![](assets\2024-10-16-15-23-55-image.png)
 
 
 
@@ -784,7 +784,7 @@ func WriteOrAppendStudentsToExcel(studentMaps *AccountProcessingResult, filePath
 
 ##### 主要修改内容
 
-**修改前**:![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-25-14-image.png)**修改后**:
+**修改前**:![](assets\2024-10-16-15-25-14-image.png)**修改后**:
 
 ```go
 // CreateAccountWithBinding account和unique_binding写入数据库 1对2的关系
@@ -852,7 +852,7 @@ func CreateAccountWithBinding(account *Account) (int, error) {
 
 ##### 主要修改内容
 
-**修改前**![](C:\Users\johnxu\AppData\Roaming\marktext\images\2024-10-16-15-30-55-image.png)**修改后**:
+**修改前**![](assets\2024-10-16-15-30-55-image.png)**修改后**:
 
 ```go
 if account.Mobile != "" {
