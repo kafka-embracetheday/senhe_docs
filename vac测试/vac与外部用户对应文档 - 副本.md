@@ -1088,9 +1088,7 @@ def _ensure_account(
                 reason=LinkReason.LinkUnionIDToAccount,
             )
 
-    # 处理绑定
     cls._process_bindings(mapped=mapped, account=account, source=source)
-    # 处理用户组等信息
     cls._link_relations(mapped=mapped, account=account, source=source)
 
     AccountRepository.merge(account)
@@ -1191,4 +1189,452 @@ def finish_external(cls, identity: IdentityProtocol, source: Source,
         source=source, result=result,
         allow_external=allow_external,
     )
+```
+
+
+
+##### 7. 微信登录
+
+```python
+路径：vac/facade/web/auth/challenge/wechat.py
+
+@get('/api/login/wechat/session')
+@api
+def session_api():
+    # 获取session_id
+    session_id = request.query.get('session_id')
+    validate_session_id(session_id)
+	
+    # 通过session_id获取用户实例
+    if WechatSharedAdapter.instance.delegated:
+        user = dog.wechat_session2user(session_id)
+    else:
+        content = REDIS_CONN.get(f"SESSION:wechat:{session_id}")
+        # 如果没获取到则抛出异常
+        if not content:
+            raise FacadeException('SessionNotReady')
+		# 如果已经扫码则抛出异常
+        if content == b'SCANNED':
+            raise FacadeException('QrcodeScanned')
+		
+		# 删除redis中的session_id
+        REDIS_CONN.delete(f"SESSION:wechat:{session_id}")
+
+        user = json.loads(content)
+	
+    # 将wx的openId作为unique_binding的key
+    openid = user['openid']
+
+    # 尝试恢复登录状态
+    LoginState.resume()
+    source = LoginState.assert_challenge(AdapterType.WECHAT_SHARED)
+
+    # 通过openId 获取unique_binding中的数据
+    binding = UniqueBindingRepository.find_binding(
+        key=openid, name=KnownBindings.WECHAT_SHARED_OPENID,
+    )
+    if not binding:
+        raise FacadeException('OpenIDNotBound')
+	# 检测是否被锁定
+    SecurityService.check_identity_locked(binding.identity_urn)
+	
+    identity = binding.load_identity()
+    ChallengeManager.finish_challenge(
+        source=source,
+        identity=identity,
+        result={
+            'openid': openid,
+            "user_agent": user['user_agent'],
+            "remote_addr": user['remote_addr'],
+            "request_id": user['request_id']
+        },
+        no_redirect=True,
+    )
+
+    return {
+        'state': LoginState.pause(),
+    }
+```
+
+
+
+#### 4.补充
+
+##### 1. source的设计与分类
+
+1.facade层
+a.can_id：是否可以作为第⼀认证⽅式，可能会将identity检索出来提供给adapter层
+**在代码vac/facade/web/auth/challenge下的多因子认证方式代码中，有一个bool类型的can_id字段，来判断是否该方式可以作为第一认证方式。一般在class类定义处**
+
+b.challenge_type: LOCAL | EXTERNAL，本地认证优先，但可以指定外部认证⽅式
+**在代码vac/facade/web/auth/challenge下的cas、wxwork代码中存在**
+
+c.can(identity)：当前身份是否⽀持认证
+**在代码vac/facade/web/auth/challenge下的多因子认证方式代码中，都有一个class类方法can来确认是否支持认证，返回bool类型**
+
+d.enroll(...)：待设计
+
+2.adapter层
+a.require_identity：是否需要有现成的身份才能认证；如何为False，隐含了只能⽀持Account
+b.identity_location: ACCOUNT / EXTERNAL 毫⽆意义，是否can_id，也就是，是否能产⽣EI/A 才是区别
+**在代码vac/domain/directory/authn_method/下的文件中**
+
+3.source层
+a.register_account: 是否注册为Account，隐含了can_id=yes，否则没有创建EI的能⼒
+
+```python
+路径：vac/facade/web/auth/challenge/util.py
+
+@classmethod
+    def impl_cls(cls, typ: AdapterType):
+        for sub in ServerSideRenderMethod.__subclasses__():
+            if sub.__method__ == typ:
+                return sub
+            
+@classmethod
+def usable_sources(
+        cls, identity: Optional[IdentityProtocol] = None,
+        ignore_types: Container[AdapterType] = None,
+        requirements: Requirements = None) -> list[Source]:
+    # 从redis获取开启的sources
+    enabled_sources = cls.enabled_sources()
+
+    results = []
+    for source in enabled_sources:
+        # 对指定的来源进行跳过
+        if ignore_types is not None and source.adapter_type in ignore_types:
+            continue
+
+        # 根据适配器的类型生成已经实现的cls
+        impl_cls = cls.impl_cls(source.adapter_type)
+        if impl_cls is None:
+            continue
+		
+        # 如果身份存在则验证是否可以作为第一认证方式以及是否可以支持认证
+        if identity:
+            if not impl_cls.can(identity):
+                continue
+        elif not impl_cls.__can_id__:
+            continue
+
+        # 加入到results中
+        results.append(source)
+
+    
+    if requirements:
+        # 更新方法id和第二认证来源
+        allowed_ids = set(requirements.method_ids or ())
+        allowed_ids.update(requirements.second_factors or ())
+
+        # 去重
+        if allowed_ids:
+            results = [
+                source for source in results
+                if source.id in allowed_ids
+            ]
+
+    return results
+```
+
+
+
+##### 2. make_binding
+
+```python
+@classmethod
+    @transactional
+    def make_binding(cls, identity_urn: str, name: str, key: str, override_identity=False,
+                     source_id: int = CONSOLE_SOURCE_ID, source_urn: str = None,
+                     reason: str = LinkReason.UserRequested) -> bool:
+        """
+        :param override_identity: override if name-key already bound to other identity
+        :param source_id: as realm id
+        :return: is overridden
+        """
+        if source_urn:
+            source_id = Source.urn_id(source_urn) \
+                if Source.urn_isinstance(source_urn) \
+                else cls.CONSOLE_SOURCE_ID
+
+        # 1. check name/key already bound to other identity
+        # 检测key和名称的绑定
+        existing: UniqueBinding = UniqueBindingRepository.find_binding(
+            name=name, key=key, for_update=True,
+        )
+
+        deleted = False
+        if existing:
+            # 如果现有绑定的urn！=新的urn
+            if existing.identity_urn != identity_urn:
+                # 如果override_identity是否覆盖身份为否
+                if not override_identity:
+                    # 记录并返回异常
+                    AuthnLogger.ignore_binding(
+                        cause=reason,
+                        reason=LinkReason.AlreadyBoundOtherIdentity,
+                        name=name, key=key, conflicted='identity_urn',
+                        current=existing.identity_urn,
+                    )
+                    raise DomainException('ConflictedBinding')
+
+                # can only override matched source
+				# 如果source_id不为控制台创建以及不等于现有的来源
+                if source_id != cls.CONSOLE_SOURCE_ID and source_id != existing.source_id:
+                    AuthnLogger.ignore_binding(
+                        cause=reason,
+                        reason=LinkReason.SourceNotMatch,
+                        name=name, key=key, conflicted='identity_urn',
+                        current=existing.identity_urn,
+                    )
+                    raise DomainException('BindingNotOwnedBySource')
+
+                # delete redundant binding, which identity/name can also bound
+                # 删除重复的绑定
+                UniqueBindingRepository.delete(existing)
+                deleted = True
+
+                AuthnLogger.remove_binding(
+                    reason=LinkReason.DropConflictedBinding,
+                    binding=existing,
+                )
+
+        # 2. check identity/name is bound to other key
+        # CONSOLE binding cannot be overridden
+        # 检测身份与名称的绑定
+        existing: UniqueBinding = UniqueBindingRepository.find_binding(
+            name=name, identity_urn=identity_urn, for_update=True,
+        )
+
+        # 如果存在则返回删除
+        
+        if existing:
+            if existing.key == key:
+                return deleted
+
+            # can only override matched source
+            if source_id != cls.CONSOLE_SOURCE_ID and source_id != existing.source_id:
+                AuthnLogger.ignore_binding(
+                    cause=reason,
+                    reason=LinkReason.SourceNotMatch,
+                    name=name, key=key, conflicted='key',
+                    current=existing.key,
+                )
+                raise DomainException('BindingNotOwnedBySource')
+
+            old_key, existing.key = existing.key, key
+            UniqueBindingRepository.merge(existing)
+
+            AuthnLogger.change_binding_key(
+                reason=reason, binding=existing, old_key=old_key,
+            )
+            return True
+        else:
+            # 添加绑定
+            binding = UniqueBinding(
+                name=name, key=key,
+                identity_urn=identity_urn, source_id=source_id,
+            )
+            UniqueBindingRepository.add(binding)
+
+            AuthnLogger.make_binding(
+                reason=reason, binding=binding,
+            )
+
+            return deleted
+```
+
+##### 3. challenge
+
+```python
+路径：vac/facade/web/auth/challenge/manager.py
+
+
+
+class ChallengeManager:
+    @classmethod
+    def initiate_challenge(cls, challenge: ChallengeContext):
+        # real impl
+        impl = ChallengeUtil.impl_cls(challenge.selected.adapter_type)
+
+        LoginState.identity_urn = challenge.identity.urn() if challenge.identity else None
+        LoginState.current_challenge = challenge
+        LoginState.mark_modified()
+        # 调用实现的initiate_challenge
+        return impl.initiate_challenge(source=challenge.selected, identity=challenge.identity)
+
+    @classmethod
+    # 针对位置用户进行身份识别
+    def start_identify_challenge(cls, requirements: Requirements):
+        # unknown user
+        # 获取一个可认证的身份列表，传入需求类，需要特定的来源
+        usable_sources = ChallengeUtil.usable_sources(requirements=requirements)
+        if not usable_sources:
+            raise FacadeException('NoUsableMethodAvailable')
+
+        return cls.initiate_challenge(ChallengeContext(
+            selected=usable_sources[0],
+            alternatives=usable_sources,
+        ))
+
+    @classmethod
+    def start_challenge(cls, identity: IdentityProtocol,
+                        preferred: list[list[int, str]], local_first: bool = True,
+                        requirements: dict = None):
+        if isinstance(identity, Account) and identity.status is AccountStatus.RESET_REQUIRED:
+            # TODO: handle reset_required
+            ...
+		# 获取可用的来源
+        usable_sources = ChallengeUtil.usable_sources(identity, requirements=requirements)
+        if not usable_sources:
+            raise FacadeException('NoUsableMethodAvailable')
+		
+        # 启动实现的方法
+        return cls.initiate_challenge(ChallengeContext(
+            identity=identity,
+            selected=ChallengeUtil.select_source(
+                sources=usable_sources, preferred=preferred,
+                local_first=local_first,
+            ),
+            alternatives=usable_sources,
+        ))
+
+    @classmethod
+    def start_alternative_challenge(cls, identity: IdentityProtocol,
+                                    selected: Source, requirements: Requirements = None):
+        usable_sources = ChallengeUtil.usable_sources(identity, requirements=requirements)
+        if not usable_sources:
+            raise FacadeException('NoUsableMethodAvailable')
+
+        return cls.initiate_challenge(ChallengeContext(
+            identity=identity,
+            selected=selected,
+            alternatives=usable_sources,
+        ))
+
+    @classmethod
+    def finish_challenge(
+            cls, source: Source, identity: IdentityProtocol,
+            result: Any = None, no_redirect=False, is_combined: bool = False):
+        # 如果当前登录态的挑战id！=来源id或者未合并 则重启登录状态
+        if not is_combined and LoginState.current_challenge_id != source.id:
+            print('ChallengeContextMismatch')
+            return LoginState.restart()
+
+        # 如果登录的身份urn存在并且正在挑战
+        if LoginState.identity_urn and LoginState.challenges:
+            if LoginState.identity_urn != identity.urn():
+                print('ChallengeContextMismatch')
+                return LoginState.restart()
+        else:
+            # 身份来源赋值
+            LoginState.identity_urn = identity.urn()
+
+        AuditService.record_authn(
+            session_id=LoginState.session_id,
+            source=source,
+            identity=identity,
+            result=result,
+        )
+
+        # 标记更改
+        LoginState.mark_modified()
+		# 清空挑战
+        LoginState.clear_challenge()
+        # 添加结果
+        LoginState.append_challenge_result(
+            source=source, identity=identity, result=result,
+        )
+
+        # 如果no_redirect为false则重定向到登录
+        if not no_redirect:
+            LoginState.pause_redirect('/api/login')
+
+    @classmethod
+    def continue_challenge(cls, identity: IdentityProtocol, completed: list[ChallengeResult],
+                           selected: Source = None, requirements: Requirements = None):
+        from vac.facade.web.auth.challenge.mfa import AuthnMFA
+        # 如果有多因子则继续开启
+        if challenge := AuthnMFA.next_challenge(
+                identity=identity, completed=completed,
+                selected=selected, requirements=requirements):
+
+            return cls.initiate_challenge(challenge)
+		# 检测允许IP
+        from vac.facade.web.auth.challenge.allowed_ip import IPWhitelistCheck
+        if challenge := IPWhitelistCheck.next_challenge(
+                identity=identity, completed=completed):
+            return cls.initiate_challenge(challenge)
+
+        # 导入模块
+        from vac.facade.web.auth.challenge.confirmation import VerifyConfirmation
+        if challenge := VerifyConfirmation.next_challenge(
+                identity=identity, completed=completed):
+
+            return cls.initiate_challenge(challenge)
+
+        # 等待登录模块
+        from vac.facade.web.auth.challenge.await_login_approval import AwaitLoginApproval
+        if challenge := AwaitLoginApproval.next_challenge(
+                identity=identity, completed=completed):
+
+            return cls.initiate_challenge(challenge)
+		
+        # account状态
+        from vac.facade.web.auth.challenge.staus import AccountStatusCheck
+        if challenge := AccountStatusCheck.next_challenge(
+                identity=identity, completed=completed):
+
+            return cls.initiate_challenge(challenge)
+		
+        # 强制修改密码
+        from vac.facade.web.auth.challenge.change_password import ForceChangePassword
+        if challenge := ForceChangePassword.next_challenge(
+                identity=identity, completed=completed):
+
+            return cls.initiate_challenge(challenge)
+
+        challenges = {
+            'challenges': [{
+                'id': result.source_id,
+                'type': result.method.name,
+                'at': result.at,
+            } for result in LoginState.challenges]
+        }
+
+        AuditService.record_issue_session(
+            session_id=LoginState.session_id,
+            identity=identity,
+            result=challenges,
+        )
+
+        AuditService.notify_user_login(
+            identity=identity,
+            result=challenges,
+        )
+
+        login_identity(
+            identity=identity,
+            session_id=LoginState.session_id,
+            challenges=[{
+                'id': result.source_id,
+                'type': result.method.name,
+                'at': result.at,
+            } for result in completed],
+        )
+
+        # SOTER集成在了FIDO2_PLATFORM里, 因此这需要转一下
+        platform_source = SourceRepository.list_by_types([AdapterType.FIDO2_PLATFORM])[0]
+        sources = [
+            [platform_source.id if result.method == AdapterType.SOTER else result.source_id,
+             AdapterType.FIDO2_PLATFORM.name if result.method == AdapterType.SOTER else result.method.name]
+            for result in completed
+        ]
+        record_last_login(
+            identity_urn=identity.urn(),
+            sources=sources,
+            nickname=identity.display_name,
+            avatar_url=identity['avatar_url'],
+        )
+
+        return LoginState.restart()
 ```
