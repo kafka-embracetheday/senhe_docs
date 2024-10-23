@@ -1305,7 +1305,7 @@ def usable_sources(
         if ignore_types is not None and source.adapter_type in ignore_types:
             continue
 
-        # 根据适配器的类型生成已经实现的cls
+        # 根据适配器的类型生成已经实现的方法
         impl_cls = cls.impl_cls(source.adapter_type)
         if impl_cls is None:
             continue
