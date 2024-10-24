@@ -1,0 +1,12 @@
+2024-10-14
+今日任务：
+1.修复vac-fe启动后报错 0.2d
+2.多因子认证在取消全部二次认证方式时对最后一个勾选按钮添加限制 0.5d   src\views\setting\component\MFAManage.vue
+3.修复密码策略自定义弱口令集和非法短语集不生效 1d   vac/domain/support/service/security.py 74  已提交
+4.修复密码策略的密码强度页面显示与实际不符 0.2d
+5.修复已绑定Account的登录秘钥，如果被标为丢失或废弃，不会被标记状态，而是解绑Account的问题 0.5d   vac/facade/web/auth/sm2_key.py
+
+
+2024-10-14
+今日进度：
+1.修复密码策略自定义弱口令集和非法短语集不生效的问题
